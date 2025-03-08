@@ -4,47 +4,84 @@ from models import TradeBrands,Products
 app = create_app()
 
 
-@app.route('<int:id>/add_brand',methods=['POST'])
-def add_brand(id):
+@app.route('/add_brand',methods=['POST'])
+def add_brand():
     
     name = request.json['brand']
-    if not name  :
-        return jsonify({'message':'debe ingresar el nombre de una marca'})
+    if  not name  :
+        return jsonify({'message':'debe ingresar el nombre de una marca'}),404
     try:
         brand = TradeBrands(name=name)
         db.session.add(brand)
         db.session.commit()
-        return jsonify ({'message':'nueva marca registrada'})
+        return jsonify ({'message':'nueva marca registrada'}),200
     except Exception as e:
-        print(f'e: {e}')
-        return jsonify({'message':'Sorry internal server error'})
+        db.session.rollback()
+        return jsonify({'message':'Sorry internal server error'}),500
     
     
     
-@app.route('<int:id>/add_product',methods=['POST'])
+@app.route('/add_product/<int:id>', methods=['POST'])
 def add_product(id):
     data = request.get_json()
-    product = data['product']
-    price = data['price']
-    tradeBrand = data['brand']
-    idUser = id
-    if not data or  not 'product' in data or not 'price' in data or not 'brand' in data:
-        return jsonify({'message':'lo sentimos faltan datos'})
+    product = data.get('product')
+    price = data.get('price')
+    brand_name = data.get('tradeBrand')
+    
+    if not product or not price or not brand_name:
+        return jsonify({'message': 'Lo sentimos, faltan datos'}), 400
+
     try:
-        tradeBrand = TradeBrands.query.filter_by(name=tradeBrand).first()
-        product = Products( product=product,price=price,tradeBrand=tradeBrand.id,id_user=idUser)
-        db.session.add(product)
+        tradeBrand = TradeBrands.query.filter_by(name=brand_name).first()
+        if not tradeBrand:
+            return jsonify({'message': 'La marca especificada no existe'}), 404
+        
+        new_product = Products(product=product, price=price, tradeBrand=tradeBrand.id, id_user=id)
+        db.session.add(new_product)
         db.session.commit()
-        return jsonify({'message':'Se ha insertado un nuevo producto'})
+        return jsonify({'message': 'Se ha insertado un nuevo producto'}), 201
     except Exception as e:
-        print(f'e: {e}')
-        return jsonify({'message':'Sorry internal server error'})
+        db.session.rollback()
+        return jsonify({'message': 'Sorry, internal server error'}), 500
 
 
 
+@app.route('/update_product/<int:id>',methods=['POST'])
+def update_product(id):
+    data = request.get_json()
+    n_product = data.get('product')
+    price =data.get('price')
+    tradeBrand = data.get('tradeBrand')
+    if not data :
+        return jsonify ({'message':'Error no se ha introducido ningún dato'})
+    try:
+        product = Products.query.filter_by(product =n_product,id_user =id).first()
+        if price:
+            product.price = price
+            db.session.commit()
+        if tradeBrand:
+            product.tradeBrand = tradeBrand
+            db.session.commit()
+        return jsonify({'message':'actualizacion realizada correctamente'})
+    except Exception as e:
+        print(e)
+        return jsonify({'message':'error internal server error'})   
+    
 
-
+@app.route('/delete_product/<int:id>',methods=['DELETE'])
+def delete_product(id):
+    data = request.get_json().get('product')
+    if not data:
+        return jsonify({'message':'error producto no especificado'})
+    try:
+        product = Products.query.filter_by(product=data,id_user=id).first()
+        db.session.delete(product)
+        db.session.commit()
+        return jsonify ({'message':'Producto Eliminado con exito'})
+    except Exception:
+        return jsonify({'message':'error internal server error'})
+    
 if __name__=='__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True,host='0.0.0.0',port=5002)
+    app.run(debug=True,host='0.0.0.0',port=5000)
