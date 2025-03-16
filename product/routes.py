@@ -19,7 +19,14 @@ def add_brand():
         db.session.rollback()
         return jsonify({'message':'Sorry internal server error'}),500
     
-    
+# @app.route('/get_products/<int:id>',methods=['POST'])
+# def get_products(id):
+#     try:
+#         products = Products.query.filter_by(id_user=id).all()
+        
+#         return jsonify({'products':[{'id':product.id,'product':product.product,'price':product.price }for product in products]})
+#     except Exception as e:
+#         return jsonify({'message':'Internal Server Error'})
     
 @app.route('/add_product/<int:id>', methods=['POST'])
 def add_product(id):
@@ -84,4 +91,4 @@ def delete_product(id):
 if __name__=='__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True,host='0.0.0.0',port=5000)
+    app.run(debug=True,host='0.0.0.0',port=5002)
