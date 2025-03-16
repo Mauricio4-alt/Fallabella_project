@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  product:
+    build:
+      context: ./product
+      dockerfile: Dockerfile
+    container_name: product_service
+    ports:
+      - "5001:5000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:,mauricioj18@db:5432/fallabella_products
+
+  sales:
+    build:
+      context: ./sales
+      dockerfile: Dockerfile
+    container_name: sales_service
+    ports:
+      - "5002:5000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:mauricioj18@db:5432/fallabella_sales
+
+  users:
+    build:
+      context: ./users
+      dockerfile: Dockerfile
+    container_name: users_service
+    ports:
+      - "5003:5000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:mauricioj18@db:5432/fallabella_users
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mauricioj18
+      POSTGRES_DB: fallabella_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
