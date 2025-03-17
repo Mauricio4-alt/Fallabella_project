@@ -11,7 +11,7 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql://postgres:,mauricioj18@db:5432/fallabella_products
+      - DATABASE_URL=postgresql://postgres:mauricioj18@db:5432/fallabella_products
 
   sales:
     build:
